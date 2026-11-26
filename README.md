@@ -29,3 +29,43 @@
     python3 -m unittest discover -v
 
 资料读取器会按文件统计各类参与方消息的数量。演练记录只描述各参与方交给系统的输入。
+
+## 协调器实现
+
+`coordinator/` 是演练记录对应的消费组协调器，只用标准库：
+
+- **core.py**　组内核心：成员能力（formats、slots）、分区分配、生效交接（handoff）、消费进度（committed）。
+- **service.py**　多组管理与持久化：每次变更原子写入状态文件，重启后未决交接与分区进度原样恢复。
+- **replay.py**　按 JSONL 演练记录逐条驱动协调器并打印可观察结果。
+- **cli.py**　持续运行入口：建组、成员更新、领取、撤回、交还、重置与运营视图。
+- **demo.py**　本地合成演练，覆盖领取/确认、最小移动、交还重投、保留点阻塞与重置、重启恢复、优先级抢占。
+
+### 语义要点
+
+- 分配同时满足资格与容量；无资格分区留空并给出原因（`no_eligible_member` / `capacity_exhausted`），不因均衡交给看不懂格式的成员。
+- 重新协调是惰性的：成员或分区变化先登记，`rebalance` 才重算。仍合法且无需移动的分区继续投递；只有实际被撤回的分区停止新批次。容量不足时高优先级分区先落位，可抢占低优先级分区。
+- 交接记录实际投递边界，再平衡与重启都不会遗忘。旧成员可在租约内确认已取批次（确认完毕即完成交接），或明确交还未处理部分；确认必须连续且不得超过实际投递边界，新成员只从已确认的下一项开始。
+- 旧租期过期后迟到的确认整段拒绝，不得越过新成员已取得的批次；交接台账可按 `expired` / `giveback` / `drained` / `reset` 分别查询。
+- 待交接时保留点越过未确认位置，交接进入阻塞，组不能自行跳过；管理员按精确损失范围 reset，并绑定本次交接编号。未重置的分区不阻塞其它分区。
+- `inspect` 按分区给出实际拥有者、正在等待的确认或 reset、以及最近决策原因；`status` 给出组总览。
+
+### 运行
+
+    python3 -m coordinator.replay examples/changing-one-partition.jsonl
+    python3 -m coordinator.replay examples/trimmed-before-handoff.jsonl
+    python3 -m coordinator.demo
+    python3 -m unittest discover -v
+
+CLI 示例（状态落在 `--store` 文件中，进程重启即恢复）：
+
+    python3 -m coordinator.cli --store /tmp/cg.json create-group
+    python3 -m coordinator.cli --store /tmp/cg.json partition --name p --format v1 --priority 2 --low 1 --high 8
+    python3 -m coordinator.cli --store /tmp/cg.json member --id old --boot 1 --formats v1,v2 --slots 2
+    python3 -m coordinator.cli --store /tmp/cg.json rebalance
+    python3 -m coordinator.cli --store /tmp/cg.json poll --member old --partition p --assignment 1
+    python3 -m coordinator.cli --store /tmp/cg.json ack --member old --partition p --assignment 1 --through 1
+    python3 -m coordinator.cli --store /tmp/cg.json giveback --member old --partition p --assignment 1
+    python3 -m coordinator.cli --store /tmp/cg.json revoke --partition p
+    python3 -m coordinator.cli --store /tmp/cg.json reset --partition p --handoff 1 --from 2 --to 3
+    python3 -m coordinator.cli --store /tmp/cg.json inspect --partition p
+    python3 -m coordinator.cli --store /tmp/cg.json handoffs --completed-by expired
