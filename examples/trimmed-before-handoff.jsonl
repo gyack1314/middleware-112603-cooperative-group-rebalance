@@ -1,0 +1,12 @@
+{"at":0,"kind":"partition","record":{"partition":"x","format":"v1","priority":1,"low":1,"high":7}}
+{"at":1,"kind":"member","record":{"id":"a","boot":1,"formats":["v1"],"slots":1}}
+{"at":2,"kind":"rebalance","record":{}}
+{"at":3,"kind":"poll","record":{"partition":"x","member":"a","assignment":1}}
+{"at":4,"kind":"member","record":{"id":"b","boot":1,"formats":["v1"],"slots":1}}
+{"at":5,"kind":"member","record":{"id":"a","boot":1,"formats":["v1"],"slots":0}}
+{"at":6,"kind":"rebalance","record":{}}
+{"at":7,"kind":"partition","record":{"partition":"x","format":"v1","priority":1,"low":4,"high":7}}
+{"at":8,"kind":"giveback","record":{"partition":"x","member":"a","assignment":1}}
+{"at":9,"kind":"inspect","record":{"partition":"x"}}
+{"at":10,"kind":"reset","record":{"partition":"x","handoff":1,"from":1,"to":3}}
+{"at":11,"kind":"poll","record":{"partition":"x","member":"b","assignment":2}}

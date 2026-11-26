@@ -1,0 +1,13 @@
+{"at":0,"kind":"partition","record":{"partition":"p","format":"v1","priority":2,"low":1,"high":8}}
+{"at":0,"kind":"partition","record":{"partition":"q","format":"v2","priority":1,"low":1,"high":4}}
+{"at":1,"kind":"member","record":{"id":"old","boot":1,"formats":["v1","v2"],"slots":2}}
+{"at":2,"kind":"rebalance","record":{}}
+{"at":3,"kind":"poll","record":{"partition":"p","member":"old","assignment":1}}
+{"at":4,"kind":"member","record":{"id":"new","boot":1,"formats":["v1"],"slots":1}}
+{"at":5,"kind":"member","record":{"id":"old","boot":1,"formats":["v1","v2"],"slots":1}}
+{"at":6,"kind":"rebalance","record":{}}
+{"at":7,"kind":"poll","record":{"partition":"q","member":"old","assignment":1}}
+{"at":8,"kind":"ack","record":{"partition":"p","member":"old","assignment":1,"through":1}}
+{"at":9,"kind":"giveback","record":{"partition":"p","member":"old","assignment":1}}
+{"at":10,"kind":"restart","record":{}}
+{"at":11,"kind":"poll","record":{"partition":"p","member":"new","assignment":2}}

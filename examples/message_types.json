@@ -1,0 +1,11 @@
+[
+  "ack",
+  "giveback",
+  "inspect",
+  "member",
+  "partition",
+  "poll",
+  "rebalance",
+  "reset",
+  "restart"
+]
